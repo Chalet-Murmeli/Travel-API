@@ -427,7 +427,7 @@ if start.strip() and destination.strip():
             st.metric("Kilometerentschädigung", f"CHF {cost_auto['comp']:.2f}")
             st.metric("Lohnkosten", f"CHF {cost_auto['wage']:.2f}")
             st.markdown("---")
-            st.metric("Kosten inkl. Lohn 3", f"CHF {cost_auto['total']:.2f}")
+            st.metric("Kosten inkl. Lohn", f"CHF {cost_auto['total']:.2f}")
             m_auto = create_map(route_auto, start, destination)
             st_folium(m_auto, width=700, height=400)
     else:
@@ -451,7 +451,7 @@ if start.strip() and destination.strip():
             st.metric("Billetpreis 2.Kl.", f"CHF {cost_ov['ticket']:.2f}")
             st.metric("Lohnkosten", f"CHF {cost_ov['wage']:.2f}")
             st.markdown("---")
-            st.metric("Kosten inkl. Lohn 4", f"CHF {cost_ov['total']:.2f}")
+            st.metric("Kosten inkl. Lohn", f"CHF {cost_ov['total']:.2f}")
             m_ov = create_map(route_transit, start, destination)
             st_folium(m_ov, width=700, height=400)
 
