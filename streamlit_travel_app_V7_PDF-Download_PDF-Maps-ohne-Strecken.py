@@ -408,8 +408,26 @@ def generate_pdf_final(route_auto, route_transit, start, destination, date, time
     pdf.multi_cell(usable_width, 5, "Quelle: Google Maps\nPDF automatisch erstellt")
 
     # --- PDF als Bytes ---
-    pdf_out = pdf.output(dest="S")
-    return bytes(pdf_out)
+    try:
+        pdf_out = pdf.output(dest="S")
+
+        if isinstance(pdf_out, str):
+            # FPDF liefert Text → encodieren
+            pdf_bytes = pdf_out.encode("latin-1")
+        elif isinstance(pdf_out, bytearray):
+            # FPDF liefert bytearray
+            pdf_bytes = bytes(pdf_out)
+        elif isinstance(pdf_out, bytes):
+            # FPDF liefert bereits Bytes
+            pdf_bytes = pdf_out
+        else:
+            raise TypeError(f"Unerwarteter Typ von pdf_out: {type(pdf_out)}")
+
+        return pdf_bytes
+
+    except Exception as e:
+        st.error(f"PDF Fehler: {e}")
+        return None
         
 # ---------------- Main ----------------
 if start.strip() and destination.strip():
