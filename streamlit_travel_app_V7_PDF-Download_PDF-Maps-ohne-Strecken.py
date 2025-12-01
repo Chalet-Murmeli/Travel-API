@@ -245,7 +245,6 @@ def generate_pdf_final(route_auto, route_transit, start, destination, date, time
     pdf.add_page()
     pdf.set_auto_page_break(True, margin=15)
 
-    # --- Verfügbare Seitenbreite ---
     usable_width = pdf.w - pdf.l_margin - pdf.r_margin
 
     # --- Fonts ---
@@ -257,133 +256,135 @@ def generate_pdf_final(route_auto, route_transit, start, destination, date, time
     pdf.set_font("DejaVu","",12)
 
     # ---------------- HEADER ----------------
-    pdf.set_fill_color(40, 80, 160)
-    pdf.set_text_color(255, 255, 255)
-    pdf.set_font("DejaVu", "B", 18)
-    pdf.multi_cell(usable_width, 10, "Reisevergleich: Auto vs Öffentlicher Verkehr", align="C", fill=True)
+    pdf.set_font("DejaVu","B",18)
+    pdf.set_fill_color(40,80,160)
+    pdf.set_text_color(255,255,255)
+    pdf.multi_cell(usable_width, 10, 
+                   "Reisevergleich: Auto vs Öffentlicher Verkehr", 
+                   align="C", fill=True)
 
-    pdf.ln(5)
-    pdf.set_text_color(0, 0, 0)
+    pdf.ln(3)
+    pdf.set_text_color(0,0,0)
     pdf.set_font("DejaVu","",12)
+
     header_text = (
         f"Von: {start}\n"
         f"Nach: {destination}\n"
         f"Datum: {date} – Abfahrt: {time_input.strftime('%H:%M')}"
     )
     pdf.multi_cell(usable_width, 6, header_text)
-    pdf.ln(4)
+    pdf.ln(3)
 
     # ---------------- KARTEN ----------------
-    pdf.set_font("DejaVu","B",13)
-    pdf.cell(0,8,"Routenübersicht",ln=True)
+    pdf.set_font("DejaVu","B",14)
+    pdf.multi_cell(usable_width, 8, "Routenübersicht")
     pdf.ln(3)
 
     y_start = pdf.get_y()
 
     try:
+        half = usable_width / 2 - 5
+
         if route_auto:
-            auto_file = static_map_save(route_auto, start, destination, "tmp_auto.png")
-            pdf.image(auto_file, x=pdf.l_margin, y=y_start, w=(usable_width/2 - 5))
-            pdf.set_xy(pdf.l_margin, y_start - 6)
-            pdf.cell((usable_width/2 - 5), 6, "Auto-Route", align="C")
+            file_auto = static_map_save(route_auto, start, destination, "tmp_auto.png")
+            pdf.image(file_auto, x=pdf.l_margin, y=y_start, w=half)
+            pdf.set_xy(pdf.l_margin, y_start - 5)
+            pdf.multi_cell(half, 5, "Auto-Route", align="C")
 
         if route_transit:
-            ov_file = static_map_save(route_transit, start, destination, "tmp_ov.png")
-            pdf.image(ov_file, x=pdf.l_margin + (usable_width/2 + 5), y=y_start, w=(usable_width/2 - 5))
-            pdf.set_xy(pdf.l_margin + (usable_width/2 + 5), y_start - 6)
-            pdf.cell((usable_width/2 - 5), 6, "ÖV-Route", align="C")
+            file_ov = static_map_save(route_transit, start, destination, "tmp_ov.png")
+            pdf.image(file_ov, x=pdf.l_margin + half + 10, y=y_start, w=half)
+            pdf.set_xy(pdf.l_margin + half + 10, y_start - 5)
+            pdf.multi_cell(half, 5, "ÖV-Route", align="C")
 
-        pdf.ln(80)
+        pdf.set_y(y_start + 75)
     except:
         pdf.ln(5)
 
     # ---------------- VERGLEICH AUTO / ÖV ----------------
-    pdf.set_font("DejaVu","B",13)
-    pdf.cell(0,8,"Vergleich Auto vs. ÖV", ln=True)
+    pdf.set_font("DejaVu","B",14)
+    pdf.multi_cell(usable_width, 8, "Vergleich Auto vs. ÖV")
     pdf.ln(2)
 
-    col_width = (usable_width / 2) - 5
+    col = usable_width / 2 - 5
 
-    # Hintergrundblock
-    pdf.set_fill_color(230, 240, 255)
-    block_y = pdf.get_y()
-    pdf.rect(pdf.l_margin, block_y, usable_width, 50, "F")
-    pdf.set_y(block_y + 3)
+    pdf.set_fill_color(230,240,255)
+    y_box = pdf.get_y()
+    pdf.rect(pdf.l_margin, y_box, usable_width, 45, "F")
+    pdf.ln(2)
 
-    # Auto-Spalte
-    pdf.set_xy(pdf.l_margin + 2, pdf.get_y())
+    # Auto
+    pdf.set_xy(pdf.l_margin + 2, y_box + 2)
     pdf.set_font("DejaVu","B",12)
-    pdf.cell(col_width, 6, "Auto")
-    pdf.set_font("DejaVu","",11)
+    pdf.multi_cell(col, 6, "Auto")
 
+    pdf.set_font("DejaVu","",11)
     dist_auto = route_auto['legs'][0]['distance']['value']/1000 if route_auto else 0
     dur_auto = route_auto['legs'][0]['duration']['value']/3600 if route_auto else 0
-    cost_auto = calculate_costs_auto(dist_auto, dur_auto)
+    c_auto = calculate_costs_auto(dist_auto, dur_auto)
 
     auto_text = (
         f"Distanz: {dist_auto:.1f} km\n"
         f"Dauer: {dur_auto*60:.0f} Min\n"
-        f"Kilometerentschädigung: CHF {cost_auto['comp']:.2f}\n"
-        f"Lohnkosten: CHF {cost_auto['wage']:.2f}\n"
-        f"Total: CHF {cost_auto['total']:.2f}"
+        f"Kost./km: CHF {c_auto['comp']:.2f}\n"
+        f"Lohn: CHF {c_auto['wage']:.2f}\n"
+        f"Total: CHF {c_auto['total']:.2f}"
     )
 
-    pdf.set_xy(pdf.l_margin + 2, pdf.get_y() + 8)
-    pdf.multi_cell(col_width, 5, auto_text)
+    pdf.set_xy(pdf.l_margin + 2, y_box + 12)
+    pdf.multi_cell(col, 5, auto_text)
 
-    # ÖV-Spalte
-    pdf.set_xy(pdf.l_margin + col_width + 10, block_y + 3)
+    # ÖV
+    pdf.set_xy(pdf.l_margin + col + 10, y_box + 2)
     pdf.set_font("DejaVu","B",12)
-    pdf.cell(col_width, 6, "ÖV")
+    pdf.multi_cell(col, 6, "ÖV")
+
     pdf.set_font("DejaVu","",11)
 
     if route_transit:
         dist_ov = route_transit['legs'][0]['distance']['value']/1000
         dur_ov = route_transit['legs'][0]['duration']['value']/3600
-        cost_ov = calculate_costs_ov(dist_ov, dur_ov)
+        c_ov = calculate_costs_ov(dist_ov, dur_ov)
 
         ov_text = (
             f"Distanz: {dist_ov:.1f} km\n"
             f"Dauer: {dur_ov*60:.0f} Min\n"
-            f"Billetpreis 2.Kl.: CHF {cost_ov['ticket']:.2f}\n"
-            f"Lohnkosten: CHF {cost_ov['wage']:.2f}\n"
-            f"Total: CHF {cost_ov['total']:.2f}"
+            f"Billet: CHF {c_ov['ticket']:.2f}\n"
+            f"Lohn: CHF {c_ov['wage']:.2f}\n"
+            f"Total: CHF {c_ov['total']:.2f}"
         )
     else:
         ov_text = "Keine ÖV-Route verfügbar."
 
-    pdf.set_xy(pdf.l_margin + col_width + 10, block_y + 11)
-    pdf.multi_cell(col_width, 5, ov_text)
+    pdf.set_xy(pdf.l_margin + col + 10, y_box + 12)
+    pdf.multi_cell(col, 5, ov_text)
 
-    pdf.ln(55)
+    pdf.set_y(y_box + 50)
 
     # ---------------- WEGBESCHREIBUNGEN ----------------
     def normalize_text(t):
-        repl = {
-            "\u202F": " ", "\u2009": " ", "\u200A": " ",
-            "\u200B": "", "\xa0": " "
-        }
-        for k,v in repl.items():
+        for k,v in {
+            "\u202F":" ", "\u2009":" ", "\u200A":" ",
+            "\u200B":"", "\xa0":" "
+        }.items():
             t = t.replace(k,v)
         return t.strip()
 
     def add_steps(title, route):
-        if not route:
-            return
+        if not route: return
 
         pdf.set_font("DejaVu","B",13)
-        pdf.cell(0,8,title,ln=True)
+        pdf.multi_cell(usable_width, 8, title)
         pdf.set_font("DejaVu","",11)
 
-        for step in route['legs'][0].get('steps', []):
-            txt = normalize_text(clean_html(step.get("html_instructions","")))
-            txt = "→ " + txt
+        for step in route['legs'][0]["steps"]:
+            txt = "→ " + normalize_text(clean_html(step.get("html_instructions","")))
             pdf.multi_cell(usable_width, 5, txt)
 
             if pdf.get_y() > 260:
                 pdf.add_page()
 
-        pdf.ln(3)
+        pdf.ln(2)
 
     add_steps("Wegbeschreibung – Auto", route_auto)
     add_steps("Wegbeschreibung – ÖV", route_transit)
@@ -392,36 +393,23 @@ def generate_pdf_final(route_auto, route_transit, start, destination, date, time
     stops = get_transit_transfers_full(route_transit)
     if stops:
         pdf.set_font("DejaVu","B",13)
-        pdf.cell(0,8,"Haltestellen & Umstiege", ln=True)
+        pdf.multi_cell(usable_width, 8, "Haltestellen & Umstiege")
         pdf.set_font("DejaVu","",11)
 
         for s in stops:
-            pdf.multi_cell(usable_width,5,"→ " + s)
+            pdf.multi_cell(usable_width, 5, "→ " + s)
             if pdf.get_y() > 260:
                 pdf.add_page()
 
-    # ---------------- FUSSZEILE ----------------
-    pdf.set_y(-30)
+    # ---------------- FOOTER ----------------
+    pdf.set_y(-25)
     pdf.set_font("DejaVu","I",9)
-    pdf.set_text_color(120)
-    pdf.multi_cell(usable_width,5,"Quelle: Google Maps\nPDF automatisch erstellt")
+    pdf.set_text_color(100)
+    pdf.multi_cell(usable_width, 5, "Quelle: Google Maps\nPDF automatisch erstellt")
 
     # --- PDF als Bytes ---
-    try:
-        pdf_out = pdf.output(dest="S")  # kann str oder bytearray sein
-
-        if isinstance(pdf_out, str):
-            # FPDF gibt Text zurück -> in Bytes encodieren
-            pdf_bytes = pdf_out.encode("latin-1")
-        else:
-            # FPDF gibt bereits bytearray / bytes zurück
-            pdf_bytes = bytes(pdf_out)
-
-        return pdf_bytes
-
-    except Exception as e:
-        st.error(f"PDF Fehler: {e}")
-        return None
+    pdf_out = pdf.output(dest="S")
+    return bytes(pdf_out)
         
 # ---------------- Main ----------------
 if start.strip() and destination.strip():
