@@ -408,13 +408,21 @@ def generate_pdf_final(route_auto, route_transit, start, destination, date, time
 
     # --- PDF als Bytes ---
     try:
-        buffer = BytesIO()
-        pdf.output(buffer)
-        return buffer.getvalue()
+        pdf_out = pdf.output(dest="S")  # kann str oder bytearray sein
+
+        if isinstance(pdf_out, str):
+            # FPDF gibt Text zurück -> in Bytes encodieren
+            pdf_bytes = pdf_out.encode("latin-1")
+        else:
+            # FPDF gibt bereits bytearray / bytes zurück
+            pdf_bytes = bytes(pdf_out)
+
+        return pdf_bytes
+
     except Exception as e:
         st.error(f"PDF Fehler: {e}")
         return None
-
+        
 # ---------------- Main ----------------
 if start.strip() and destination.strip():
     if gmaps:
