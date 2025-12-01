@@ -413,7 +413,7 @@ def generate_pdf_final(route_auto, route_transit, start, destination, date, time
 
     # RETURN AS BYTES FOR STREAMLIT
     try:
-        pdf_bytes = pdf.output(dest="S").encode("latin-1")
+        pdf_bytes = pdf.output(dest="S").tobytes()
         return pdf_bytes
     except Exception as e:
         st.error(f"PDF Fehler: {e}")
