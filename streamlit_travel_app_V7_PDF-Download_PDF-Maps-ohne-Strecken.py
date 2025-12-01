@@ -413,7 +413,10 @@ def generate_pdf_final(route_auto, route_transit, start, destination, date, time
 
     # RETURN AS BYTES FOR STREAMLIT
     try:
-        pdf_bytes = pdf.output(dest="S").tobytes()
+        buffer = BytesIO()
+        pdf.output(buffer)  # schreibt direkt in den BytesIO-Stream
+        pdf_bytes = buffer.getvalue()
+        buffer.close()
         return pdf_bytes
     except Exception as e:
         st.error(f"PDF Fehler: {e}")
