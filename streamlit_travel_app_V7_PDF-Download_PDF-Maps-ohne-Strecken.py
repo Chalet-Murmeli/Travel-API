@@ -355,6 +355,18 @@ def generate_pdf_final(route_auto, route_transit, start, destination, date, time
     pdf.ln(50)
 
     # ---------------- WEGBESCHREIBUNGEN ----------------
+    def normalize_text(t):
+        replacements = {
+            "\u202F": " ",  # narrow no-break space
+            "\u2009": " ",  # thin space
+            "\u200A": " ",
+            "\u200B": "",   # zero-width
+            "\xa0": " ",    # non-breaking space
+        }
+        for k, v in replacements.items():
+            t = t.replace(k, v)
+        return t.strip()
+
     def add_steps(title, route):
         if not route:
             return
@@ -363,13 +375,17 @@ def generate_pdf_final(route_auto, route_transit, start, destination, date, time
         pdf.set_font("DejaVu","",11)
 
         for step in route['legs'][0].get('steps', []):
-            txt = clean_html(step.get('html_instructions',''))
+            txt = clean_html(step.get("html_instructions", ""))
+            txt = normalize_text(txt)
             txt = "→ " + txt  # Bullet-Style
 
             for line in safe_text(txt, width=90):
+                if not line.strip():
+                    continue  # leere Zeile überspringen
                 if pdf.get_y() > 270:
                     pdf.add_page()
-                pdf.multi_cell(0, 5, line)
+                usable_width = pdf.w - pdf.l_margin - pdf.r_margin
+                pdf.multi_cell(usable_width, 5, line)
         pdf.ln(3)
 
     add_steps("Wegbeschreibung – Auto", route_auto)
