@@ -403,10 +403,18 @@ def generate_pdf_final(route_auto, route_transit, start, destination, date, time
         pdf.multi_cell(usable_width, 8, "Haltestellen & Umstiege")
         pdf.set_font("DejaVu","",11)
 
+        # X-Position sauber setzen
+        pdf.set_x(pdf.l_margin)
+
         for s in stops:
             pdf.multi_cell(usable_width, 5, "→ " + s)
+            pdf.set_x(pdf.l_margin)   # <-- Wichtig: Cursor zurück an den linken Rand
+
             if pdf.get_y() > 260:
                 pdf.add_page()
+                pdf.set_x(pdf.l_margin)
+
+        pdf.ln(3)
 
     # ---------------- FOOTER ----------------
     pdf.set_y(-25)
