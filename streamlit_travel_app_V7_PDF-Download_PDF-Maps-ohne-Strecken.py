@@ -370,21 +370,28 @@ def generate_pdf_final(route_auto, route_transit, start, destination, date, time
             t = t.replace(k,v)
         return t.strip()
 
+    # ---------------- WEGBESCHREIBUNGEN ----------------
     def add_steps(title, route):
-        if not route: return
+        if not route:
+            return
 
         pdf.set_font("DejaVu","B",13)
-        pdf.multi_cell(usable_width, 8, title)
+        pdf.multi_cell(usable_width, 8, title)  # <-- niemals cell() verwenden
         pdf.set_font("DejaVu","",11)
+
+        # X und Y sauber setzen
+        pdf.set_x(pdf.l_margin)
 
         for step in route['legs'][0]["steps"]:
             txt = "→ " + normalize_text(clean_html(step.get("html_instructions","")))
             pdf.multi_cell(usable_width, 5, txt)
+            pdf.set_x(pdf.l_margin)  # <-- Nach jedem Schritt zurück nach links
 
             if pdf.get_y() > 260:
                 pdf.add_page()
+                pdf.set_x(pdf.l_margin)
 
-        pdf.ln(2)
+        pdf.ln(3)
 
     add_steps("Wegbeschreibung – Auto", route_auto)
     add_steps("Wegbeschreibung – ÖV", route_transit)
