@@ -401,7 +401,8 @@ def generate_pdf_final(route_auto, route_transit, start, destination, date, time
         for s in stops:
             if pdf.get_y() > 270:
                 pdf.add_page()
-            pdf.multi_cell(0,5,"→ " + s)
+            usable_width = pdf.w - pdf.l_margin - pdf.r_margin
+            pdf.multi_cell(usable_width,5,"→ " + s)
         pdf.ln(3)
 
     # ---------------- FUSSZEILE ----------------
